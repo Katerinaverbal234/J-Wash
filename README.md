@@ -46,43 +46,30 @@ un-embedding. On top of it, J-Wash adds:
 Pre-fitted lenses come from [Neuronpedia](https://huggingface.co/neuronpedia/jacobian-lens);
 you can also fit your own locally.
 
-## Requirements
-
-- An **NVIDIA GPU (CUDA)**. J-Wash is CUDA-only (it uses `pynvml` and `cuda:*`
-  devices); there is no CPU/MPS path. ~12 GB of VRAM comfortably runs a 4B model.
-- **Python 3.13** (3.11+ should work).
-- **Node.js 18+** and npm (to build the front-end).
-
 ## Installation
 
+Requirements:
+- NVIDIA GPU (CUDA)
+- Python 3.11+
+- Node.js 18+
+
 ```bash
-# 1. Clone this repo
-git clone https://github.com/<you>/j-wash.git
+git clone https://github.com/extraltodeus/j-wash.git
 cd j-wash
 
-# 2. Create an environment (conda or venv)
-conda create -n jwash python=3.13 -y
-conda activate jwash
-#   or:  python -m venv .venv && source .venv/bin/activate   (Windows: .venv\Scripts\activate)
-
-# 3. Install PyTorch matching your CUDA version — see https://pytorch.org
-#    (Blackwell / RTX 50-series needs a cu128+ build)
 pip install torch --index-url https://download.pytorch.org/whl/cu124
-
-# 4. Vendor the Jacobian-lens library (not on PyPI) and install it editable
 git clone https://github.com/anthropics/jacobian-lens vendor/jacobian-lens
-pip install -e vendor/jacobian-lens
 
-# 5. Install the rest
+pip install -e vendor/jacobian-lens
 pip install -r requirements.txt
 
-# 6. Build the front-end
 cd ui && npm install && npm run build && cd ..
+
+python -X utf8 run.py
 ```
 
-> The `jlens` package is imported as `jlens` in the code. If Anthropic's repo URL
-> changes, update step 4 accordingly — any package exposing `jlens.lens.JacobianLens`,
-> `jlens.from_hf`, `jlens.fit`, `jlens.vis` and `jlens.examples` will work.
+Then open **http://localhost:8381**.
+
 
 ## Running
 
