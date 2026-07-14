@@ -24,6 +24,9 @@ ui/dist/
 .vscode/
 .idea/
 
+# Claude's private project-reprise notes (agent-maintained overview)
+.reprise/
+
 # Local model folders live in the project root — add yours here, e.g.:
 # Qwen3-4B/
 
