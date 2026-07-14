@@ -88,6 +88,9 @@ fit_manager.on_progress = _broadcast_fit
 # concurrent HF downloads: one state per repo_id
 _downloads = {}
 _downloads_lock = threading.Lock()
+# last synchronous /api/generate exchange (CLI/MCP): surfaced in /api/status so
+# the UI can show what an external client generates, without persisting it
+_last_generation = None
 
 
 class LoadRequest(BaseModel):
@@ -203,6 +206,7 @@ def api_status():
         "interventions": interventions.summary(),
         "interventions_scale": interventions.global_scale,
         "interventions_mode": interventions.mode,
+        "last_generation": _last_generation,
     }
 
 
@@ -740,6 +744,23 @@ async def api_generate_sync(req: GenerateSyncRequest):
         raise HTTPException(500, str(exc))
     if done.get("error"):
         raise HTTPException(500, done["error"])
+    global _last_generation
+    _last_generation = {
+        "n": (_last_generation or {}).get("n", 0) + 1,
+        "prompt": next(
+            (m.get("content", "") for m in reversed(req.messages) if m.get("role") == "user"),
+            "",
+        ),
+        "text": done.get("text", ""),
+        "stats": done.get("stats"),
+    }
+    # nudge any watching UI to refresh once this API generation is done (used by
+    # the "API monitor" mode, which drops the 2s status poll for event-driven refresh)
+    for ws in list(_ws_locks):
+        try:
+            await _ws_send(ws, json.dumps({"type": "api_generation"}))
+        except Exception:
+            pass
     return {"text": done.get("text", ""), "stats": done.get("stats")}
 
 

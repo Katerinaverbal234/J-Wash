@@ -45,7 +45,7 @@ async function jsonFetch(url, options) {
   return body
 }
 
-const SAMPLING_DEFAULT = { temperature: 0.7, top_p: 0.95, top_k: 40, max_tokens: 512, seed: -1 }
+const SAMPLING_DEFAULT = { temperature: 0.7, top_p: 0.95, top_k: 40, max_tokens: 512, seed: -1, repetition_penalty: 1 }
 
 // Human-readable name of the loaded lens (local path or Hub file) for "which lens do I have?".
 function lensName(meta) {
@@ -123,6 +123,11 @@ export default function App() {
   // chat display: markdown rendering of assistant replies (default ON)
   const [chatMd, setChatMd] = useState(() => localStorage.getItem('jlens_chat_md') !== '0')
   useEffect(() => { localStorage.setItem('jlens_chat_md', chatMd ? '1' : '0') }, [chatMd])
+
+  // "API monitor" mode: instead of polling status every 2s, refresh only when an
+  // API/MCP generation completes (the server pushes on /ws). Off = normal 2s poll.
+  const [apiMonitor, setApiMonitor] = useState(() => localStorage.getItem('jlens_api_monitor') === '1')
+  useEffect(() => { localStorage.setItem('jlens_api_monitor', apiMonitor ? '1' : '0') }, [apiMonitor])
 
   // server-side settings (Options tab)
   const [settings, setSettings] = useState(null)
@@ -274,11 +279,29 @@ export default function App() {
         }
       }).catch(() => localStorage.removeItem('jlens_conv'))
     }
+  }, [])
+
+  // status refresh — normally a 2s poll; in "API monitor" mode it is event-driven
+  // instead, refetched only when an API/MCP generation ends (pushed over /ws).
+  useEffect(() => {
     const tick = () => jsonFetch('/api/status').then(setStatus).catch(() => {})
     tick()
-    const id = setInterval(tick, 2000)
-    return () => clearInterval(id)
-  }, [])
+    if (!apiMonitor) {
+      const id = setInterval(tick, 2000)
+      return () => clearInterval(id)
+    }
+    let ws
+    let timer
+    let closed = false
+    const open = () => {
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws'
+      ws = new WebSocket(`${proto}://${location.host}/ws`)
+      ws.onmessage = (ev) => { try { if (JSON.parse(ev.data)?.type === 'api_generation') tick() } catch { /* ignore */ } }
+      ws.onclose = () => { if (!closed) timer = setTimeout(open, 2000) }
+    }
+    open()
+    return () => { closed = true; clearTimeout(timer); if (ws) ws.close() }
+  }, [apiMonitor])
 
   useEffect(() => {
     if (conv?.id) localStorage.setItem('jlens_conv', String(conv.id))
@@ -1517,6 +1540,11 @@ export default function App() {
               onChange={(e) => patchSettings({ chat_markdown: e.target.checked })} /> render replies as markdown
           </label>
         </div>
+        <div className="row"><label title="while an external API/MCP client drives the model: stop the 2s status polling and refresh the view only when a generation finishes — keeps the UI fast">API monitor</label>
+          <label style={{ width: 'auto' }}>
+            <input type="checkbox" checked={apiMonitor} onChange={(e) => setApiMonitor(e.target.checked)} /> refresh only when an API generation ends
+          </label>
+        </div>
 
         <h2>Paths</h2>
         <div className="row">
@@ -1590,6 +1618,16 @@ export default function App() {
           <summary>System prompt {system.trim() ? '●' : ''} {conv?.id ? '(set at creation)' : ''}</summary>
           <textarea value={system} onChange={(e) => setSystem(e.target.value)} placeholder="(none)" disabled={!!conv?.id} />
         </details>
+
+        {status?.last_generation?.text && (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 6, padding: '6px 8px', marginBottom: 6, maxHeight: 160, overflow: 'auto' }}
+            title="latest text generated through the API (CLI/MCP) — not saved to the conversation">
+            <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 4 }}>
+              generated via API/MCP{status.last_generation.prompt ? ` · ${status.last_generation.prompt.slice(0, 80)}` : ''}
+            </div>
+            <div style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{status.last_generation.text}</div>
+          </div>
+        )}
 
         <div className="messages" ref={messagesRef}>
           {messages.map((m, i) => (
@@ -1709,15 +1747,14 @@ export default function App() {
               onChange={(e) => setSampling({ ...sampling, max_tokens: +e.target.value })} /></label>
             <label title="-1 = random; ≥ 0 = reproducible sampling">seed <input type="number" step="1" min="-1" value={sampling.seed}
               onChange={(e) => setSampling({ ...sampling, seed: Math.trunc(+e.target.value) })} /></label>
+            <label title="repetition penalty — 1 = off, >1 penalizes tokens already in the context (curbs loops)">rep <input type="number" step="0.05" min="1" max="2" value={sampling.repetition_penalty ?? 1}
+              onChange={(e) => setSampling({ ...sampling, repetition_penalty: +e.target.value })} /></label>
             <button onClick={onRegenerate} disabled={streaming || !messages.some((m) => m.role === 'assistant')}>Regenerate</button>
             <button onClick={onContinue}
               title="extend the last reply: the model picks up exactly where it stopped"
               disabled={streaming || messages[messages.length - 1]?.role !== 'assistant' || messages[messages.length - 1]?.id == null}>
               Continue</button>
             <button onClick={onEditLast} disabled={streaming || !messages.some((m) => m.role === 'user')}>Edit last</button>
-            <label title="render assistant replies as markdown">
-              <input type="checkbox" checked={chatMd} onChange={(e) => setChatMd(e.target.checked)} /> md
-            </label>
             {lensMeta && (
               <button
                 className={editorOpen ? 'ed-toggle-on' : ''}

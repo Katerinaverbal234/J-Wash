@@ -30,6 +30,7 @@ DEFAULT_SAMPLING = {
     "top_k": 40,
     "max_tokens": 512,
     "seed": -1,  # -1 = random
+    "repetition_penalty": 1.0,  # 1.0 = off
 }
 
 

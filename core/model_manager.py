@@ -418,7 +418,10 @@ def _resolve_revision(source):
     return None
 
 
-def _sample(logits, temperature, top_p, top_k, generator=None):
+def _sample(logits, temperature, top_p, top_k, generator=None, penalty=1.0, penalty_ids=None):
+    if penalty != 1.0 and penalty_ids is not None and penalty_ids.numel():
+        score = logits[penalty_ids]
+        logits[penalty_ids] = torch.where(score > 0, score / penalty, score * penalty)
     if temperature <= 0:
         return int(logits.argmax())
     probs = torch.softmax(logits / temperature, -1)
@@ -621,6 +624,11 @@ class ModelManager:
             top_k = int(sampling.get("top_k", config.DEFAULT_SAMPLING["top_k"]))
             max_tokens = int(sampling.get("max_tokens", config.DEFAULT_SAMPLING["max_tokens"]))
             seed = int(sampling.get("seed", config.DEFAULT_SAMPLING["seed"]))
+            # repetition penalty (HF-style, over prompt + generated); 1.0 = off.
+            # Deliberately NOT exposed through the MCP server.
+            repetition_penalty = float(
+                sampling.get("repetition_penalty", config.DEFAULT_SAMPLING["repetition_penalty"])
+            )
             # base model with a generic template: the model has no notion of dialogue
             # turns, so we cut as soon as it reopens one (User: or a new Assistant:)
             stop_seqs = (
@@ -676,13 +684,19 @@ class ModelManager:
             reply_ids = []
             emitted = ""
             started = time.perf_counter()
+            penalty_ids = input_ids[0].to(logits.device) if repetition_penalty != 1.0 else None
             for _ in range(max_tokens):
                 if stop_event.is_set():
                     break
-                next_id = _sample(logits[0].float(), temperature, top_p, top_k, generator)
+                next_id = _sample(logits[0].float(), temperature, top_p, top_k, generator,
+                                  repetition_penalty, penalty_ids)
                 if next_id in eos_ids:
                     break
                 reply_ids.append(next_id)
+                if penalty_ids is not None:
+                    penalty_ids = torch.cat(
+                        [penalty_ids, torch.tensor([next_id], device=penalty_ids.device)]
+                    )
                 text = tokenizer.decode(reply_ids, skip_special_tokens=True)
                 stop_hit = next((s for s in stop_seqs if s in text), None)
                 if stop_hit:
